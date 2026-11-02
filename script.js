@@ -1,57 +1,90 @@
-const FORM_ENDPOINT = "https://script.google.com/macros/s/AKfycbzzAvDXdXOOK3xtuwylHBT99i-SbSpG9zcs0HiONP8pK5VvDkDE64AJFP2BFsFQF2Is/exec";
+const SUPABASE_URL = "https://mcfgqitnsndyhfwobiee.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_eTGqwM8Pwacy62eYUCJUGQ_iSlp8p_M";
 const form = document.querySelector("#enrollment-form");
 const message = document.querySelector("#form-message");
 const submitButton = form.querySelector('button[type="submit"]');
-const submissionFrame = document.querySelector('iframe[name="submission-frame"]');
-let activeToken = "";
-let timeoutId;
+const honeypot = form.querySelector('[name="contactWebsite"]');
 
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (!form.reportValidity()) return;
 
-  if (!FORM_ENDPOINT.startsWith("https://script.google.com/macros/s/") || !FORM_ENDPOINT.endsWith("/exec")) {
-    showMessage("Form setup is not complete yet. Add the Google Apps Script web app URL to script.js.", false);
+  if (honeypot.value.trim()) {
+    showMessage("We could not verify this submission. Please refresh the page and try again.", false);
     return;
   }
 
-  activeToken = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-  const previousToken = form.querySelector('[name="submissionToken"]');
-  if (previousToken) previousToken.remove();
-  const tokenInput = document.createElement("input");
-  tokenInput.type = "hidden";
-  tokenInput.name = "submissionToken";
-  tokenInput.value = activeToken;
-  form.append(tokenInput);
+  const formData = new FormData(form);
+  const enquiry = {
+    student_name: formData.get("studentName").trim(),
+    birth_date: formData.get("birthDate"),
+    guardian_name: formData.get("guardianName").trim(),
+    phone: formData.get("phone").trim(),
+    email: formData.get("email").trim(),
+    school: formData.get("school").trim() || null,
+    address: formData.get("address").trim() || null,
+    class_name: formData.get("class"),
+    board: formData.get("board"),
+    subjects: formData.get("subjects"),
+    learning_mode: formData.get("learningMode"),
+    start_date: formData.get("startDate") || null,
+    schedule: formData.get("schedule") || null,
+    notes: formData.get("notes").trim() || null,
+    consent: formData.get("consent") === "on",
+  };
 
-  form.action = FORM_ENDPOINT;
   submitButton.disabled = true;
   message.classList.remove("visible");
-  form.submit();
 
-  timeoutId = window.setTimeout(() => {
-    activeToken = "";
-    submitButton.disabled = false;
-    showMessage("We could not confirm the submission. Please check your connection and try again.", false);
-  }, 30000);
-});
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/enquiries`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify(enquiry),
+    });
 
-window.addEventListener("message", (event) => {
-  if (event.source !== submissionFrame.contentWindow || !event.data || event.data.type !== "bright-path-submission" ||
-      event.data.token !== activeToken) return;
+    if (!response.ok) {
+      const errorBody = await response.text();
+      let errorMessage = errorBody;
+      let errorCode = "";
+      try {
+        const errorDetails = JSON.parse(errorBody);
+        errorCode = errorDetails.code || "";
+        errorMessage = errorDetails.message || errorDetails.details || errorBody;
+      } catch {
+        // Keep the response text when Supabase does not return JSON.
+      }
 
-  window.clearTimeout(timeoutId);
-  activeToken = "";
-  submitButton.disabled = false;
+      console.error("Supabase enquiry insert failed:", response.status, errorMessage);
+      if (errorCode === "42501" || response.status === 403) {
+        throw new Error("Supabase denied the insert. Run the setup SQL to grant insert access and enable the enquiries policy.");
+      }
+      if (response.status === 401) {
+        throw new Error("Supabase rejected the public key. Check the project URL and publishable key.");
+      }
+      if (response.status === 404) {
+        throw new Error("The enquiries table was not found. Run the Supabase setup SQL in the project.");
+      }
+      throw new Error(`Supabase could not save the enquiry: ${errorMessage || response.statusText}`);
+    }
 
-  if (event.data.success) {
     form.reset();
-    showMessage(event.data.message, true);
-  } else {
-    showMessage(event.data.message || "We could not save your enquiry. Please try again.", false);
+    showMessage("Thank you. Your enquiry has been submitted successfully.", true);
+  } catch (error) {
+    console.error("Could not submit enrolment enquiry:", error);
+    showMessage(
+      error instanceof TypeError
+        ? "Could not connect to Supabase. Check your internet connection and project settings, then try again."
+        : error.message,
+      false,
+    );
+  } finally {
+    submitButton.disabled = false;
   }
 });
 

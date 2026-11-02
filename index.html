@@ -37,10 +37,10 @@
         <h2 id="form-title">Enrolment details</h2>
         <p>Tell us a little about your student. <span class="required-note">*</span> Required fields</p>
       </div>
-      <form id="enrollment-form" method="post" target="submission-frame">
+      <form id="enrollment-form">
         <div class="honeypot" aria-hidden="true">
           <label for="contact-website">Leave this field empty</label>
-          <input id="contact-website" name="contactWebsite" tabindex="-1" autocomplete="off">
+          <input id="contact-website" name="contactWebsite" tabindex="-1" autocomplete="new-password">
         </div>
 
         <fieldset>
@@ -160,15 +160,14 @@
         <div class="consent">
           <input id="consent" name="consent" type="checkbox" required>
           <label for="consent">I confirm these details are correct, agree to their storage in Rajat's
-            private admissions Google Sheet, and agree to be contacted about this enquiry. *</label>
+            private admissions database, and agree to be contacted about this enquiry. *</label>
         </div>
         <div class="submit-row">
           <button class="submit-button" type="submit">Send enrolment enquiry <span aria-hidden="true">→</span></button>
-          <p class="privacy-note">Enquiries are saved to our private admissions Google Sheet.</p>
+          <p class="privacy-note">Enquiries are securely submitted to our private admissions database.</p>
           <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
         </div>
       </form>
-      <iframe class="submission-frame" name="submission-frame" title="Form submission status" hidden></iframe>
     </section>
 
     <aside class="info-cards" aria-label="Enrolment information">
