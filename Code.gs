@@ -19,10 +19,6 @@ const HEADERS = [
 ];
 
 function setup() {
-  if (!PropertiesService.getScriptProperties().getProperty(NOTIFICATION_EMAIL_PROPERTY)) {
-    throw new Error("Set the NOTIFICATION_EMAIL script property before running setup.");
-  }
-  MailApp.getRemainingDailyQuota();
   const sheet = getEnquiriesSheet();
   Logger.log("Enquiries sheet: " + sheet.getParent().getUrl());
 }
