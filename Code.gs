@@ -61,8 +61,9 @@ function doPost(event) {
     return renderResult(false, "", "This submission could not be verified. Please refresh the page and try again.");
   }
 
-  if (String(params.website || "").trim()) {
-    return renderResult(true, token, "Thank you. Your enquiry has been submitted.");
+  if (String(params.contactWebsite || params.website || "").trim()) {
+    console.warn("Enquiry rejected because the honeypot field was populated.");
+    return renderResult(false, token, "We could not verify this submission. Please refresh the page and try again.");
   }
 
   try {
