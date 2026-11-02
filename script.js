@@ -1,4 +1,4 @@
-const FORM_ENDPOINT = "https://script.google.com/macros/s/AKfycbx2TjexPexwR-wDZxF5XXexhYIgTmZb9PUPBdWy5ZMO7jFeZ-NjIozVuXnwmPeCZZaS/exec";
+const FORM_ENDPOINT = "https://script.google.com/macros/s/AKfycbzzAvDXdXOOK3xtuwylHBT99i-SbSpG9zcs0HiONP8pK5VvDkDE64AJFP2BFsFQF2Is/exec";
 const form = document.querySelector("#enrollment-form");
 const message = document.querySelector("#form-message");
 const submitButton = form.querySelector('button[type="submit"]');
